@@ -1,0 +1,1 @@
+echo "Running tests for git-auto.sh..."
