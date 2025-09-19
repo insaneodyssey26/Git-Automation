@@ -36,6 +36,55 @@ if [ "$1" = "--status" ]; then
     exit 0
 fi
 
+# Check for branch flag
+if [ "$1" = "--branch" ]; then
+    if ! command -v git &> /dev/null; then
+        echo "🛑 Git not installed."
+        exit 1
+    fi
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo "🛑 Not in a Git repository."
+        exit 1
+    fi
+    case $2 in
+        list)
+            echo "🌿 Branches:"
+            git branch -a
+            ;;
+        switch)
+            if [ -z "$3" ]; then
+                echo "🛑 Usage: --branch switch <branch-name>"
+                exit 1
+            fi
+            echo "🔄 Switching to branch $3..."
+            if git checkout "$3"; then
+                echo "✅ Switched to $3."
+            else
+                echo "🛑 Failed to switch to $3."
+                exit 1
+            fi
+            ;;
+        create)
+            if [ -z "$3" ]; then
+                echo "🛑 Usage: --branch create <branch-name>"
+                exit 1
+            fi
+            echo "🆕 Creating and switching to branch $3..."
+            if git checkout -b "$3"; then
+                echo "✅ Created and switched to $3."
+            else
+                echo "🛑 Failed to create $3."
+                exit 1
+            fi
+            ;;
+        *)
+            echo "🛑 Usage: --branch list|switch <name>|create <name>"
+            exit 1
+            ;;
+    esac
+    exit 0
+fi
+
 if ! command -v git &> /dev/null; then
     echo "🛑 Git not installed. Please install Git first."
     exit 1

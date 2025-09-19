@@ -40,6 +40,59 @@ if ($args[0] -eq "--status") {
     exit 0
 }
 
+# Check for branch flag
+if ($args[0] -eq "--branch") {
+    if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Host "🛑 Git not installed." -ForegroundColor Red
+        exit 1
+    }
+    try {
+        git rev-parse --git-dir | Out-Null
+    } catch {
+        Write-Host "🛑 Not in a Git repository." -ForegroundColor Red
+        exit 1
+    }
+    switch ($args[1]) {
+        "list" {
+            Write-Host "🌿 Branches:" -ForegroundColor Green
+            git branch -a
+        }
+        "switch" {
+            if (!$args[2]) {
+                Write-Host "🛑 Usage: --branch switch <branch-name>" -ForegroundColor Red
+                exit 1
+            }
+            Write-Host "🔄 Switching to branch $($args[2])..." -ForegroundColor Yellow
+            try {
+                git checkout $args[2]
+                Write-Host "✅ Switched to $($args[2])." -ForegroundColor Green
+            } catch {
+                Write-Host "🛑 Failed to switch to $($args[2])." -ForegroundColor Red
+                exit 1
+            }
+        }
+        "create" {
+            if (!$args[2]) {
+                Write-Host "🛑 Usage: --branch create <branch-name>" -ForegroundColor Red
+                exit 1
+            }
+            Write-Host "🆕 Creating and switching to branch $($args[2])..." -ForegroundColor Yellow
+            try {
+                git checkout -b $args[2]
+                Write-Host "✅ Created and switched to $($args[2])." -ForegroundColor Green
+            } catch {
+                Write-Host "🛑 Failed to create $($args[2])." -ForegroundColor Red
+                exit 1
+            }
+        }
+        default {
+            Write-Host "🛑 Usage: --branch list|switch <name>|create <name>" -ForegroundColor Red
+            exit 1
+        }
+    }
+    exit 0
+}
+
 if (!(Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Host "🛑 Git not installed. Please install Git first." -ForegroundColor Red
     exit 1
