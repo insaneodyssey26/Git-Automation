@@ -2,7 +2,6 @@ Write-Host "🌀 Git Automation Tool (PowerShell)" -ForegroundColor Cyan
 Write-Host "Simplifying Git workflows for beginners and casual developers" -ForegroundColor Cyan
 Write-Host ""
 
-# Check for status flag
 if ($args[0] -eq "--status") {
     if (!(Get-Command git -ErrorAction SilentlyContinue)) {
         Write-Host "🛑 Git not installed." -ForegroundColor Red
@@ -40,7 +39,6 @@ if ($args[0] -eq "--status") {
     exit 0
 }
 
-# Check for branch flag
 if ($args[0] -eq "--branch") {
     if (!(Get-Command git -ErrorAction SilentlyContinue)) {
         Write-Host "🛑 Git not installed." -ForegroundColor Red
@@ -88,6 +86,51 @@ if ($args[0] -eq "--branch") {
         default {
             Write-Host "🛑 Usage: --branch list|switch <name>|create <name>" -ForegroundColor Red
             exit 1
+        }
+    }
+    exit 0
+}
+
+if ($args[0] -eq "--stage") {
+    if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Host "🛑 Git not installed." -ForegroundColor Red
+        exit 1
+    }
+    try {
+        git rev-parse --git-dir | Out-Null
+    } catch {
+        Write-Host "🛑 Not in a Git repository." -ForegroundColor Red
+        exit 1
+    }
+    $files = git status --porcelain | ForEach-Object { $_.Substring(3) }
+    if ($files.Count -eq 0) {
+        Write-Host "✅ No changes to stage." -ForegroundColor Green
+        exit 0
+    }
+    Write-Host "📋 Files to stage:" -ForegroundColor Yellow
+    for ($i = 0; $i -lt $files.Count; $i++) {
+        $status = (git status --porcelain $files[$i]).Substring(0, 2)
+        $emoji = switch ($status) {
+            "?? " { "📄" }
+            "M  " { "✏️" }
+            "A  " { "✅" }
+            "D  " { "🗑️" }
+            default { "❓" }
+        }
+        Write-Host "$($i+1). $emoji $($files[$i]) ($status.Trim())" -ForegroundColor White
+    }
+    $input = Read-Host "Enter numbers to stage (comma-separated) or 'all'"
+    if ($input -eq "all") {
+        git add .
+        Write-Host "✅ All files staged." -ForegroundColor Green
+    } else {
+        $nums = $input -split ','
+        foreach ($num in $nums) {
+            $idx = [int]$num - 1
+            if ($idx -ge 0 -and $idx -lt $files.Count) {
+                git add $files[$idx]
+                Write-Host "✅ Staged: $($files[$idx])" -ForegroundColor Green
+            }
         }
     }
     exit 0

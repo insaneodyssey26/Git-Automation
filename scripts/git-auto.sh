@@ -2,7 +2,6 @@ echo "🌀 Git Automation Tool (Bash)"
 echo "Simplifying Git workflows for beginners and casual developers"
 echo ""
 
-# Check for status flag
 if [ "$1" = "--status" ]; then
     if ! command -v git &> /dev/null; then
         echo "🛑 Git not installed."
@@ -36,7 +35,6 @@ if [ "$1" = "--status" ]; then
     exit 0
 fi
 
-# Check for branch flag
 if [ "$1" = "--branch" ]; then
     if ! command -v git &> /dev/null; then
         echo "🛑 Git not installed."
@@ -82,6 +80,48 @@ if [ "$1" = "--branch" ]; then
             exit 1
             ;;
     esac
+    exit 0
+fi
+
+if [ "$1" = "--stage" ]; then
+    if ! command -v git &> /dev/null; then
+        echo "🛑 Git not installed."
+        exit 1
+    fi
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo "🛑 Not in a Git repository."
+        exit 1
+    fi
+    files=($(git status --porcelain | awk '{print $2}'))
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "✅ No changes to stage."
+        exit 0
+    fi
+    echo "📋 Files to stage:"
+    for i in "${!files[@]}"; do
+        status=$(git status --porcelain "${files[$i]}" | cut -c1-2)
+        case $status in
+            "??") echo "$((i+1)). 📄 ${files[$i]} (untracked)" ;;
+            "M ") echo "$((i+1)). ✏️ ${files[$i]} (modified)" ;;
+            "A ") echo "$((i+1)). ✅ ${files[$i]} (staged)" ;;
+            "D ") echo "$((i+1)). 🗑️ ${files[$i]} (deleted)" ;;
+            *) echo "$((i+1)). ❓ ${files[$i]} ($status)" ;;
+        esac
+    done
+    read -p "Enter numbers to stage (comma-separated) or 'all': " input
+    if [ "$input" = "all" ]; then
+        git add .
+        echo "✅ All files staged."
+    else
+        IFS=',' read -ra nums <<< "$input"
+        for num in "${nums[@]}"; do
+            idx=$((num-1))
+            if [ $idx -ge 0 ] && [ $idx -lt ${#files[@]} ]; then
+                git add "${files[$idx]}"
+                echo "✅ Staged: ${files[$idx]}"
+            fi
+        done
+    fi
     exit 0
 fi
 
