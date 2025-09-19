@@ -125,6 +125,51 @@ if [ "$1" = "--stage" ]; then
     exit 0
 fi
 
+if [ "$1" = "--undo" ]; then
+    if ! command -v git &> /dev/null; then
+        echo "🛑 Git not installed."
+        exit 1
+    fi
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo "🛑 Not in a Git repository."
+        exit 1
+    fi
+    case $2 in
+        reset)
+            echo "🔄 Soft resetting last commit (changes kept)..."
+            if git reset --soft HEAD~1; then
+                echo "✅ Last commit reset. Changes are unstaged."
+            else
+                echo "🛑 Reset failed."
+                exit 1
+            fi
+            ;;
+        stash)
+            echo "📦 Stashing changes..."
+            if git stash; then
+                echo "✅ Changes stashed."
+            else
+                echo "🛑 Stash failed."
+                exit 1
+            fi
+            ;;
+        unstage)
+            echo "🔄 Unstaging all changes..."
+            if git reset; then
+                echo "✅ All changes unstaged."
+            else
+                echo "🛑 Unstage failed."
+                exit 1
+            fi
+            ;;
+        *)
+            echo "🛑 Usage: --undo reset|stash|unstage"
+            exit 1
+            ;;
+    esac
+    exit 0
+fi
+
 if ! command -v git &> /dev/null; then
     echo "🛑 Git not installed. Please install Git first."
     exit 1

@@ -136,6 +136,56 @@ if ($args[0] -eq "--stage") {
     exit 0
 }
 
+if ($args[0] -eq "--undo") {
+    if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Host "🛑 Git not installed." -ForegroundColor Red
+        exit 1
+    }
+    try {
+        git rev-parse --git-dir | Out-Null
+    } catch {
+        Write-Host "🛑 Not in a Git repository." -ForegroundColor Red
+        exit 1
+    }
+    switch ($args[1]) {
+        "reset" {
+            Write-Host "🔄 Soft resetting last commit (changes kept)..." -ForegroundColor Yellow
+            try {
+                git reset --soft HEAD~1
+                Write-Host "✅ Last commit reset. Changes are unstaged." -ForegroundColor Green
+            } catch {
+                Write-Host "🛑 Reset failed." -ForegroundColor Red
+                exit 1
+            }
+        }
+        "stash" {
+            Write-Host "📦 Stashing changes..." -ForegroundColor Yellow
+            try {
+                git stash
+                Write-Host "✅ Changes stashed." -ForegroundColor Green
+            } catch {
+                Write-Host "🛑 Stash failed." -ForegroundColor Red
+                exit 1
+            }
+        }
+        "unstage" {
+            Write-Host "🔄 Unstaging all changes..." -ForegroundColor Yellow
+            try {
+                git reset
+                Write-Host "✅ All changes unstaged." -ForegroundColor Green
+            } catch {
+                Write-Host "🛑 Unstage failed." -ForegroundColor Red
+                exit 1
+            }
+        }
+        default {
+            Write-Host "🛑 Usage: --undo reset|stash|unstage" -ForegroundColor Red
+            exit 1
+        }
+    }
+    exit 0
+}
+
 if (!(Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Host "🛑 Git not installed. Please install Git first." -ForegroundColor Red
     exit 1
