@@ -41,6 +41,13 @@ if [ -z "$branch" ]; then
     exit 1
 fi
 
+echo "🔄 Pulling latest changes from origin/$branch..."
+if git pull --rebase origin "$branch"; then
+    echo "✅ Pulled successfully."
+else
+    echo "🛑 Pull failed. Continuing with push..."
+fi
+
 echo "📤 Pushing to origin/$branch..."
 if git push origin "$branch"; then
     echo "✅ Pushed successfully to origin/$branch!"

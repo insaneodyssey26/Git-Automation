@@ -45,6 +45,14 @@ if (!$branch) {
     exit 1
 }
 
+Write-Host "🔄 Pulling latest changes from origin/$branch..." -ForegroundColor Yellow
+try {
+    git pull --rebase origin $branch
+    Write-Host "✅ Pulled successfully." -ForegroundColor Green
+} catch {
+    Write-Host "🛑 Pull failed. Continuing with push..." -ForegroundColor Red
+}
+
 Write-Host "📤 Pushing to origin/$branch..." -ForegroundColor Yellow
 try {
     git push origin $branch
