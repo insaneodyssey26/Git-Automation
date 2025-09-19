@@ -2,6 +2,44 @@ Write-Host "🌀 Git Automation Tool (PowerShell)" -ForegroundColor Cyan
 Write-Host "Simplifying Git workflows for beginners and casual developers" -ForegroundColor Cyan
 Write-Host ""
 
+# Check for status flag
+if ($args[0] -eq "--status") {
+    if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+        Write-Host "🛑 Git not installed." -ForegroundColor Red
+        exit 1
+    }
+    try {
+        git rev-parse --git-dir | Out-Null
+    } catch {
+        Write-Host "🛑 Not in a Git repository." -ForegroundColor Red
+        exit 1
+    }
+    $branch = git branch --show-current 2>$null
+    if (!$branch) {
+        $branch = git symbolic-ref --short HEAD 2>$null
+    }
+    Write-Host "🌿 Current branch: $branch" -ForegroundColor Green
+    Write-Host "📊 Status:" -ForegroundColor Yellow
+    $statusLines = git status --porcelain
+    if ($statusLines) {
+        foreach ($line in $statusLines) {
+            $status = $line.Substring(0, 2)
+            $file = $line.Substring(3)
+            switch ($status) {
+                "?? " { Write-Host "📄 Untracked: $file" -ForegroundColor Gray }
+                "M  " { Write-Host "✏️ Modified: $file" -ForegroundColor Yellow }
+                "A  " { Write-Host "✅ Staged: $file" -ForegroundColor Green }
+                "D  " { Write-Host "🗑️ Deleted: $file" -ForegroundColor Red }
+                "R  " { Write-Host "🔄 Renamed: $file" -ForegroundColor Blue }
+                default { Write-Host "❓ Other: $file ($status)" -ForegroundColor Magenta }
+            }
+        }
+    } else {
+        Write-Host "✅ Working tree clean." -ForegroundColor Green
+    }
+    exit 0
+}
+
 if (!(Get-Command git -ErrorAction SilentlyContinue)) {
     Write-Host "🛑 Git not installed. Please install Git first." -ForegroundColor Red
     exit 1
